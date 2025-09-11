@@ -1,0 +1,83 @@
+﻿@page "/EditNhanVien/{Id:guid}"
+@rendermode InteractiveServer
+@using Data.Models
+@using BlazorAdmin.Service.IService
+@inject INhanVienService NhanVienservice
+@inject NavigationManager manager
+
+<h3 class="mb-4">Chỉnh sửa nhân viên</h3>
+
+<EditForm Model="nhanVien" OnValidSubmit="HandleValidSubmit" FormName="UpdateNhanVien">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="hoten" class="form-label">Họ tên</label>
+        <InputText id="hoten" class="form-control" @bind-Value="nhanVien.HoTen" />
+    </div>
+
+    <div class="mb-3">
+        <label for="sdt" class="form-label">Số điện thoại</label>
+        <InputText id="sdt" class="form-control" @bind-Value="nhanVien.SoDienThoai" />
+    </div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="nhanVien.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="ngaysinh" class="form-label">Ngày sinh</label>
+        <InputDate id="ngaysinh" class="form-control" @bind-Value="nhanVien.NgaySinh" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+    <button href="/QuanLyNhanVien" class="btn btn-danger">Hủy thay đổi</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private NhanVien nhanVien = new();
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await NhanVienservice.GetByIdNhanVienAsync(Id);
+            if (result != null)
+            {
+                nhanVien = result;
+            }
+            else
+            {
+                errorMessage = "Không tìm thấy nhân viên với ID này.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi tải dữ liệu: " + ex.Message;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            nhanVien.NgayCapNhatCuoiCung = DateTime.Now;
+            await NhanVienservice.UpdateNhanVienAsync(nhanVien);
+            manager.NavigateTo("/QuanLyNhanVien");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi cập nhật: " + ex.Message;
+        }
+    }
+}

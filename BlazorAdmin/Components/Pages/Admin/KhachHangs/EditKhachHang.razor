@@ -1,0 +1,83 @@
+﻿@page "/EditKhachHang/{Id:guid}"
+@rendermode InteractiveServer
+@using Data.Models
+@using BlazorAdmin.Service.IService
+@inject IKhachHangService khachHangService
+@inject NavigationManager manager
+<h3>Chinh sửa khách hàng</h3>	
+
+<EditForm Model="khachHangs" OnValidSubmit="HandleValidSubmit" FormName="UpdateKhachHang">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="hoten" class="form-label">Họ tên</label>
+        <InputText id="hoten" class="form-control" @bind-Value="khachHangs.HoTen" />
+    </div>
+
+    <div class="mb-3">
+        <label for="sdt" class="form-label">Số điện thoại</label>
+        <InputText id="sdt" class="form-control" @bind-Value="khachHangs.SoDienThoai" />
+    </div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="khachHangs.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="ngaysinh" class="form-label">Ngày sinh</label>
+        <InputDate id="ngaysinh" class="form-control" @bind-Value="khachHangs.NgaySinh" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+    <button href="/KhachHang" class="btn btn-danger">Hủy thay đổi</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private KhachHang khachHangs = new();
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await khachHangService.GetById(Id);
+            if (result != null)
+            {
+                khachHangs = result;
+            }
+            else
+            {
+                errorMessage = "Không tìm thấy nhân viên với ID này.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi tải dữ liệu: " + ex.Message;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            khachHangs.NgayCapNhatCuoiCung = DateTime.Now;
+            await khachHangService.Update(khachHangs);
+            manager.NavigateTo("/KhachHang");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi cập nhật: " + ex.Message;
+        }
+    }
+}
+

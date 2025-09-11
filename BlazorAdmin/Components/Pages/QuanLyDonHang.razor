@@ -1,0 +1,124 @@
+﻿@page "/hoadon"
+@layout AdminLayout
+@inject IHoaDonService hoaDonService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+@rendermode InteractiveServer
+
+@using Data.Models
+<link href="css/HoaDon.css" rel="stylesheet" />
+
+<h2 class="text-xl font-semibold mb-4">Quản lý đơn hàng</h2>
+
+<div class="search-row">
+    <input @bind="tuKhoa" @bind:event="oninput" placeholder="Tìm kiếm..." />
+    <button @onclick="TaiLai">Tải lại</button>
+</div>
+
+<div class="tabs">
+    @foreach (var status in trangThaiList)
+    {
+        <button class="@(trangThai == status ? "active" : "")" @onclick='() => LocTheoTrangThai(status)'>@status</button>
+    }
+</div>
+
+<table class="table-auto w-full text-sm">
+    <thead>
+        <tr class="bg-gray-100">
+            <th class="p-2">#</th>
+            <th class="p-2">Mã đơn</th>
+            <th class="p-2">Khách hàng</th>
+            <th class="p-2">Ngày tạo</th>
+            <th class="p-2">Loại</th>
+            <th class="p-2">Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (dsHoaDon?.Any() == true)
+        {
+            var index = 1;
+            foreach (var hd in dsHoaDon)
+            {
+                <tr class="border-b">
+                    <td class="p-2">@index</td>
+
+                    <td class="p-2">@hd.HoaDonId.ToString().Substring(0, 8)</td>
+@*                     <td class="p-2">@(string.IsNullOrEmpty(hd.TenCuaKhachHang) ? "Khách lẻ" : hd.TenCuaKhachHang)</td>
+ *@                    <td class="p-2">@hd.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+
+                    <td class="p-2">@hd.hinhThucThanhToan?.TenHinhThuc</td>
+                    <td class="p-2">
+                        <span class="badge @(GetBadgeClass(hd.TrangThai))">@hd.TrangThai</span>
+                    </td>
+                </tr>
+                index++;
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center text-gray-500 p-4">Chưa có dữ liệu</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<HoaDon> dsHoaDon = new();
+    private string tuKhoa = string.Empty;
+    private string trangThai = "TẤT CẢ";
+    private readonly List<string> trangThaiList = new() { "TẤT CẢ", "Chờ xác nhận", "Chờ giao", "Vận chuyển", "Đã giao", "Đã thanh toán", "Đã huỷ", "Hoàn thành" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+        await TaiLai();
+    }
+
+    private async void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (e.Location.Contains("/hoadon", StringComparison.OrdinalIgnoreCase))
+        {
+            await TaiLai();
+            StateHasChanged();
+        }
+    }
+
+    private async Task TaiLai()
+    {
+        var all = await hoaDonService.GetAll();
+
+        dsHoaDon = all?
+            .Where(hd => string.IsNullOrEmpty(tuKhoa) /* || hd.TenCuaKhachHang?.Contains(tuKhoa, StringComparison.OrdinalIgnoreCase) == true */)
+            .ToList();
+
+
+        if (!string.IsNullOrEmpty(trangThai) && trangThai != "TẤT CẢ")
+        {
+            dsHoaDon = dsHoaDon.Where(h => h.TrangThai == trangThai).ToList();
+        }
+    }
+
+    private async Task LocTheoTrangThai(string tt)
+    {
+        trangThai = tt;
+        await TaiLai();
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Hoàn thành" => "badge-purple",
+        "Chờ xác nhận" => "badge-blue",
+        "Chờ giao" => "badge-orange",
+        "Vận chuyển" => "badge-blue",
+        "Đã giao" => "badge-green",
+        "Đã thanh toán" => "badge-green",
+        "Đã huỷ" => "badge-red",
+        _ => "badge-gray"
+    };
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= HandleLocationChanged;
+    }
+}

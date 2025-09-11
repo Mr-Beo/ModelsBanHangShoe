@@ -1,0 +1,88 @@
+﻿@page "/Cart"
+@rendermode InteractiveServer
+
+@using API.Models.DTO
+@using BlazorKhachHang.Service
+@using BlazorKhachHang.Service.IService
+@inject IGioHangService GioHangService
+@inject NavigationManager manager
+@inject IJSRuntime JS
+
+<h3>🛒 Giỏ hàng</h3>
+
+@if (gioHang == null)
+{
+    <p>Đang tải giỏ hàng...</p>
+}
+else if (gioHang.DanhSachChiTiet == null || !gioHang.DanhSachChiTiet.Any())
+{
+    <p>Giỏ hàng trống.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Sản phẩm</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Tổng</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in gioHang.DanhSachChiTiet)
+            {
+                <tr>
+                    <td>@item.TenGiay</td>
+                    <td>@item.Gia.ToString("n0") đ</td>
+                    <td>
+                        <input type="number" min="1" value="@item.SoLuong"
+                               @onchange="@(async e => await CapNhatSoLuong(item.GioHangChiTietId, int.Parse(e.Value?.ToString() ?? "1")))" />
+                    </td>
+                    <td>@((item.Gia * item.SoLuong).ToString("n0")) đ</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="@(async () => await XoaSanPham(item.GioHangChiTietId))">
+                            Xóa
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 class="text-end">
+        Tổng cộng: @gioHang.DanhSachChiTiet.Sum(x => x.Gia * x.SoLuong).ToString("n0") đ
+    </h4>
+}
+
+@code {
+    private GioHangDTO? gioHang;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Giả sử lấy tài khoản Id từ localstorage/session hoặc hardcode để demo
+        Guid taiKhoanId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+        gioHang = await GioHangService.LayTheoTaiKhoanAsync(taiKhoanId);
+    }
+
+    private async Task CapNhatSoLuong(Guid chiTietId, int soLuong)
+    {
+        await GioHangService.CapNhatSoLuong(chiTietId, soLuong);
+        await RefreshCart();
+    }
+
+    private async Task XoaSanPham(Guid chiTietId)
+    {
+        await GioHangService.XoaSanPham(chiTietId);
+        await RefreshCart();
+    }
+
+    private async Task RefreshCart()
+    {
+        Guid taiKhoanId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        gioHang = await GioHangService.LayTheoTaiKhoanAsync(taiKhoanId);
+        StateHasChanged();
+    }
+}

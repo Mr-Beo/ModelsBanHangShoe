@@ -1,0 +1,165 @@
+﻿@page "/AddKhachHang"
+@rendermode InteractiveServer
+@using Data.Models
+@using System.ComponentModel.DataAnnotations
+@using API.Models.DTO
+@using BlazorAdmin.Service.IService
+@inject IKhachHangService khachHangService
+@inject ITaiKhoanService taiKhoanService
+@inject NavigationManager manager
+
+<h3 class="mb-4">Thêm khách hàng</h3>
+
+<EditForm Model="Input" OnValidSubmit="SubmitFormCreate" FormName="AddKhachHangForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="hoTen" class="form-label">Họ tên:</label>
+        <InputText id="hoTen" class="form-control" @bind-Value="Input.HoTen" autocomplete="off" placeholder="Nhập họ và tên" />
+    </div>
+
+    <div class="mb-3">
+        <label for="soDienThoai" class="form-label">Số điện thoại:</label>
+        <InputText id="soDienThoai" class="form-control" @bind-Value="Input.SoDienThoai" autocomplete="off" placeholder="Nhập số điện thoại" />
+    </div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="Input.Email" autocomplete="off" placeholder="Nhập Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="ngaySinh" class="form-label">Ngày sinh:</label>
+        <InputDate id="ngaySinh" class="form-control" @bind-Value="Input.NgaySinh" />
+
+    </div>
+
+    <div class="mb-3">
+        <label for="Tk" class="form-label fw-bold">Tên tài khoản</label>
+        <InputText id="Tk" class="form-control" @bind-Value="Input.UserName" placeholder="Nhập tên tài khoản" autocomplete="off" />
+    </div>
+
+    <div class="mb-3">
+        <label for="MK1" class="form-label fw-bold">Mật khẩu</label>
+        <InputText id="MK1" type="password" class="form-control" @bind-Value="Input.Password" placeholder="Nhập mật khẩu" />
+    </div>
+
+    <div class="mb-3">
+        <label for="MK2" class="form-label fw-bold">Xác nhận mật khẩu</label>
+        <InputText id="MK2" type="password" class="form-control" @bind-Value="Input.ConfirmPassword" placeholder="Xác nhận mật khẩu" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Thêm</button>
+    <button type="button" class="btn btn-danger" @onclick="NavigateToKhachHang">Hủy thay đổi</button>
+
+
+
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    private KhachHang std = new KhachHang
+        {
+            TrangThai = true,
+            NgayTao = DateTime.Now,
+            NgayCapNhatCuoiCung = DateTime.Now
+        };
+
+    private string username = "";
+    private string password = "";
+    private string confirmPassword = "";
+    private string errorMessage = "";
+
+    private async Task SubmitFormCreate()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(Input.UserName))
+        {
+            errorMessage = "Tên tài khoản không được để trống.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Input.Password))
+        {
+            errorMessage = "Mật khẩu không được để trống.";
+            return;
+        }
+
+        if (Input.Password != Input.ConfirmPassword)
+        {
+            errorMessage = "Mật khẩu xác nhận không khớp.";
+            return;
+        }
+
+        try
+        {
+
+            var taiKhoan = new Data.Models.TaiKhoan
+                {
+                    TaikhoanId = Guid.NewGuid(),
+                    Username = Input.UserName,
+                    Password = Input.Password,
+                    Ngaytaotaikhoan = DateTime.Now
+                };
+
+            await taiKhoanService.CreateTaiKhoanAsync(taiKhoan);
+
+            std.HoTen = Input.HoTen;
+            std.Email = Input.Email;
+            std.SoDienThoai = Input.SoDienThoai;
+            std.NgaySinh = Input.NgaySinh;
+            std.TaiKhoanId = taiKhoan.TaikhoanId;
+            std.NgayCapNhatCuoiCung = DateTime.Now;
+            std.NgayTao = DateTime.Now;
+
+            await khachHangService.Create(std);
+
+            manager.NavigateTo("/KhachHang", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Đã xảy ra lỗi: " + ex.Message;
+        }
+    }
+    private void NavigateToKhachHang()
+    {
+        manager.NavigateTo("/KhachHang");
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Chưa nhập họ tên")]
+        [StringLength(50, ErrorMessage = "Họ tên tối đa 50 ký tự")]
+        [RegularExpression(@"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$", ErrorMessage = "Họ tên chỉ chứa chữ cái và khoảng trắng")]
+        [Display(Name = "HoTen")]
+        public string HoTen { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Chưa nhập Email")]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Chưa nhập Số điện thoại")]
+        [Display(Name = "SoDienThoai")]
+        public string SoDienThoai { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Chưa chọn ngày sinh")]
+        public DateTime NgaySinh { get; set; }
+
+
+        [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu không được để trống")]
+        public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
+    }
+}
