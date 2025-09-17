@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace API.Migrations
 {
     /// <inheritdoc />
-    public partial class shoe : Migration
+    public partial class datn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -618,22 +618,22 @@ namespace API.Migrations
                 columns: new[] { "KichCoId", "MoTa", "TenKichCo", "TrangThai", "size" },
                 values: new object[,]
                 {
-                    { new Guid("038b8e6f-e6f0-49cc-be86-761c8516b238"), "Cỡ giày 46", "Size 46", true, 46 },
-                    { new Guid("11bc8cf1-6715-4ba3-a19d-b93b1e1b34f4"), "Cỡ giày 38", "Size 38", true, 38 },
-                    { new Guid("243d74e6-be86-4d02-a125-7fc0cc68dab2"), "Cỡ giày 40", "Size 40", true, 40 },
-                    { new Guid("2735c374-5d4c-48c4-b6de-fa3848206c70"), "Cỡ giày 36", "Size 36", true, 36 },
-                    { new Guid("2ac3e2e7-a4ca-4571-85d4-6a126632d01d"), "Cỡ giày 50", "Size 50", true, 50 },
-                    { new Guid("36591f41-b7b6-49f5-984c-f71166f6cd98"), "Cỡ giày 43", "Size 43", true, 43 },
-                    { new Guid("3f51a5b7-157c-4798-841f-2eba0ee93659"), "Cỡ giày 41", "Size 41", true, 41 },
-                    { new Guid("66e101f1-8541-4736-82a9-342b7216bf9e"), "Cỡ giày 37", "Size 37", true, 37 },
-                    { new Guid("996368ad-643b-47c1-b002-0af14f51a9b1"), "Cỡ giày 45", "Size 45", true, 45 },
-                    { new Guid("ad929470-fb1d-42d3-8eee-91b66622e1e4"), "Cỡ giày 48", "Size 48", true, 48 },
-                    { new Guid("c3950535-5549-42c3-a423-502dc56bd88a"), "Cỡ giày 39", "Size 39", true, 39 },
-                    { new Guid("cb1ce644-0d46-4fba-9d67-27ff31234959"), "Cỡ giày 42", "Size 42", true, 42 },
-                    { new Guid("d0f0bd1c-18b8-44ac-a58d-02478430f47c"), "Cỡ giày 47", "Size 47", true, 47 },
-                    { new Guid("e96c1040-3b2d-4957-9642-53c0804053a2"), "Cỡ giày 44", "Size 44", true, 44 },
-                    { new Guid("f73de828-6ae9-4b70-abd2-fdcf236efaa9"), "Cỡ giày 35", "Size 35", true, 35 },
-                    { new Guid("f75a9fb4-6a00-47ca-89f9-809c73ae7dae"), "Cỡ giày 49", "Size 49", true, 49 }
+                    { new Guid("1cf6d2ac-b100-420b-812e-6292fc6e17ea"), "Cỡ giày 36", "Size 36", true, 36 },
+                    { new Guid("22abfb82-d448-4d99-a449-56f4532f58d9"), "Cỡ giày 48", "Size 48", true, 48 },
+                    { new Guid("2c8a07d9-ef17-4a0f-b382-e1798d09597b"), "Cỡ giày 49", "Size 49", true, 49 },
+                    { new Guid("2e61a0c5-af97-4215-b615-195d3dfdda33"), "Cỡ giày 46", "Size 46", true, 46 },
+                    { new Guid("43d13f8f-235c-4e6b-84b9-603a2c4c2193"), "Cỡ giày 43", "Size 43", true, 43 },
+                    { new Guid("4fd175d9-578d-4be7-a995-797e502dcf54"), "Cỡ giày 42", "Size 42", true, 42 },
+                    { new Guid("54dabe6a-e128-40c4-bdc4-eed5caa2f7dc"), "Cỡ giày 41", "Size 41", true, 41 },
+                    { new Guid("662138d1-3210-4e53-aeca-0c5300a55b8c"), "Cỡ giày 44", "Size 44", true, 44 },
+                    { new Guid("6a5fe1f8-e625-43e9-b568-407f3b4e4724"), "Cỡ giày 35", "Size 35", true, 35 },
+                    { new Guid("908937dd-7dfa-40ee-a74c-bcc546128402"), "Cỡ giày 37", "Size 37", true, 37 },
+                    { new Guid("94ac7df7-9387-403e-a7a3-0aa67dc4b754"), "Cỡ giày 50", "Size 50", true, 50 },
+                    { new Guid("b7ac9917-da85-4533-bb2f-a6552112736e"), "Cỡ giày 45", "Size 45", true, 45 },
+                    { new Guid("cb17c13a-4034-427b-b0c0-bec653aea336"), "Cỡ giày 47", "Size 47", true, 47 },
+                    { new Guid("cb8c71c4-5e48-42e4-b31f-3b2d829773d4"), "Cỡ giày 40", "Size 40", true, 40 },
+                    { new Guid("d09776bb-3900-4090-a263-012e88422600"), "Cỡ giày 38", "Size 38", true, 38 },
+                    { new Guid("ec96f272-a481-410b-8af4-a27519b9b1b0"), "Cỡ giày 39", "Size 39", true, 39 }
                 });
 
             migrationBuilder.InsertData(
@@ -641,23 +641,23 @@ namespace API.Migrations
                 columns: new[] { "MauSacId", "Color", "MoTa", "TenMau", "TrangThai" },
                 values: new object[,]
                 {
-                    { new Guid("22901125-d60a-41af-9dfc-391beea75022"), "#FFFFFF", "Màu trắng", "Trắng", true },
-                    { new Guid("2332ba71-8a10-4a1d-baff-2285de08b08a"), "#0000FF", "Màu xanh dương cơ bản", "Xanh dương", true },
-                    { new Guid("c2276c06-7630-4647-bd7f-851c4020ccb7"), "#FFFF00", "Màu vàng", "Vàng", true },
-                    { new Guid("c435401f-7e74-42c8-852d-2b52389c10a3"), "#00FF00", "Màu xanh lá cây", "Xanh lá", true },
-                    { new Guid("dbe95278-b41a-46a1-8826-7dae35d0bf1b"), "#FF0000", "Màu đỏ cơ bản", "Đỏ", true },
-                    { new Guid("eb011e15-d9fd-47bf-98d1-775e63d3f1cc"), "#000000", "Màu đen", "Đen", true }
+                    { new Guid("2f19958e-1f24-4998-8d30-c340db7a1e13"), "#FF0000", "Màu đỏ cơ bản", "Đỏ", true },
+                    { new Guid("4955c83b-c94c-4e42-8538-478925a52082"), "#FFFFFF", "Màu trắng", "Trắng", true },
+                    { new Guid("62d73868-938c-4867-ae2c-3fdc22e03214"), "#00FF00", "Màu xanh lá cây", "Xanh lá", true },
+                    { new Guid("c17dd3f4-bbfc-4945-9c77-9aa4416c4b1f"), "#FFFF00", "Màu vàng", "Vàng", true },
+                    { new Guid("f42c0f8f-b6b0-4c13-b05e-f23fea796675"), "#0000FF", "Màu xanh dương cơ bản", "Xanh dương", true },
+                    { new Guid("f5ddb848-0785-45d7-87c6-0375745a16dd"), "#000000", "Màu đen", "Đen", true }
                 });
 
             migrationBuilder.InsertData(
                 table: "TaiKhoans",
                 columns: new[] { "TaikhoanId", "Ngaytaotaikhoan", "Password", "Username" },
-                values: new object[] { new Guid("99999999-9999-9999-9999-999999999999"), new DateTime(2025, 9, 11, 20, 36, 42, 253, DateTimeKind.Local).AddTicks(9977), "admin123", "admin" });
+                values: new object[] { new Guid("99999999-9999-9999-9999-999999999999"), new DateTime(2025, 9, 17, 15, 58, 48, 439, DateTimeKind.Local).AddTicks(9001), "admin123", "admin" });
 
             migrationBuilder.InsertData(
                 table: "NhanViens",
                 columns: new[] { "NhanVienId", "ChucVuId", "Email", "HoTen", "NgayCapNhatCuoiCung", "NgaySinh", "SoDienThoai", "TaikhoanId", "TrangThai" },
-                values: new object[] { new Guid("88888888-8888-8888-8888-888888888888"), new Guid("11111111-1111-1111-1111-111111111111"), "admin@shop.com", "Nguyễn Văn Quản Trị", new DateTime(2025, 9, 11, 20, 36, 42, 254, DateTimeKind.Local).AddTicks(74), new DateTime(1995, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "0987654321", new Guid("99999999-9999-9999-9999-999999999999"), true });
+                values: new object[] { new Guid("88888888-8888-8888-8888-888888888888"), new Guid("11111111-1111-1111-1111-111111111111"), "admin@shop.com", "Nguyễn Văn Quản Trị", new DateTime(2025, 9, 17, 15, 58, 48, 439, DateTimeKind.Local).AddTicks(9076), new DateTime(1995, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "0987654321", new Guid("99999999-9999-9999-9999-999999999999"), true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Anhs_GiayChiTietId",

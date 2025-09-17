@@ -8,13 +8,27 @@
         <div class="col-md-3 mb-4">
             <div class="bg-white p-3 rounded shadow-sm sidebar text-center">
                 <!-- Avatar -->
-                <div class="mb-3">
+                @* <div class="mb-3">
                     <img src="@avatarImage" alt="avatar" class="profile-avatar mb-2" id="avatarImage">
                     <button class="btn btn-outline-secondary btn-sm mb-2" @onclick="TriggerAvatarClick">
                         <i class="bi bi-pencil"></i> Chỉnh sửa ảnh
                     </button>
                     <input type="file" accept="image/*" style="display:none" @ref="avatarInput" id="avatarInput" @onchange="OnAvatarChanged">
+                    
+
+
+                </div> *@
+                <!-- Avatar -->
+                <div class="mb-3 text-center">
+                    <img src="@avatarImage" alt="avatar"
+                         class="profile-avatar mb-2"
+                         style="width:120px;height:120px;border-radius:50%;object-fit:cover;" />
+
+                    <div>
+                        <InputFile OnChange="OnAvatarChanged" accept="image/*" />
+                    </div>
                 </div>
+
 
                 <!-- Tên -->
                 <div>
@@ -25,13 +39,13 @@
                 <!-- Menu -->
                 <div class="menu-title mt-4">Tài khoản của tôi</div>
                 <nav class="nav flex-column mb-3">
-                    <a class="nav-link @(activeTab=="profile" ? "active" : null)" @onclick="@(() => SetActiveTab("profile"))">Hồ sơ</a>
-                    <a class="nav-link @(activeTab=="address" ? "active" : null)" @onclick="@(() => SetActiveTab("address"))">Địa chỉ</a>
+                    <a class="nav-link @(activeTab == "profile" ? "active" : null)" @onclick="@(() => SetActiveTab("profile"))">Hồ sơ</a>
+                    <a class="nav-link @(activeTab == "address" ? "active" : null)" @onclick="@(() => SetActiveTab("address"))">Địa chỉ</a>
                 </nav>
                 <nav class="nav flex-column">
-                    <a class="nav-link @(activeTab=="donmua" ? "active" : null)" @onclick="LoadDonMua">Đơn mua</a>
+                    <a class="nav-link @(activeTab == "donmua" ? "active" : null)" @onclick="LoadDonMua">Đơn mua</a>
                     <a class="nav-link" href="#">Phiếu giảm giá</a>
-                    <a class="nav-link @(activeTab=="doimatkhau" ? "active" : null)" @onclick="@(() => SetActiveTab("doimatkhau"))">Đổi mật khẩu</a>
+                    <a class="nav-link @(activeTab == "doimatkhau" ? "active" : null)" @onclick="@(() => SetActiveTab("doimatkhau"))">Đổi mật khẩu</a>
 
                 </nav>
             </div>
@@ -98,9 +112,9 @@
             <!-- Đổi mật khẩu -->
             @if (activeTab == "doimatkhau")
             {
-               
-                    <DoiMatKhauTab />
-               
+
+                <DoiMatKhauTab />
+
             }
         </div>
     </div>
@@ -196,17 +210,39 @@
         await JS.InvokeVoidAsync("eval", "document.getElementById('avatarInput').click();");
     }
 
-    private async Task OnAvatarChanged(ChangeEventArgs e)
+    // private async Task OnAvatarChanged(ChangeEventArgs e)
+    // {
+    //     var file = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile);
+    //     if (file != null)
+    //     {
+    //         var buffer = new byte[file.Size];
+    //         await file.OpenReadStream().ReadAsync(buffer);
+    //         avatarImage = "data:" + file.ContentType + ";base64," + Convert.ToBase64String(buffer);
+    //         await JS.InvokeVoidAsync("localStorage.setItem", "avatarImage", avatarImage);
+    //     }
+    // }
+    private async Task OnAvatarChanged(InputFileChangeEventArgs e)
     {
-        var file = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile);
+        var file = e.File;
         if (file != null)
         {
-            var buffer = new byte[file.Size];
-            await file.OpenReadStream().ReadAsync(buffer);
-            avatarImage = "data:" + file.ContentType + ";base64," + Convert.ToBase64String(buffer);
+            // Tạo buffer và đọc stream
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024); // giới hạn 5MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            var bytes = ms.ToArray();
+
+            // Convert sang base64 để hiển thị và lưu
+            avatarImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+
             await JS.InvokeVoidAsync("localStorage.setItem", "avatarImage", avatarImage);
+
+            StateHasChanged();
         }
     }
+
+
 
     private void SetActiveTab(string tab)
     {
@@ -219,7 +255,7 @@
         DonMuaHtml = await JS.InvokeAsync<string>("fetchHtmlContent", "donmua.html");
     }
 
-    
+
 
     public class ProfileData
     {

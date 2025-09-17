@@ -1,90 +1,208 @@
 ﻿@page "/login"
-@layout Layout.Layoutgeneral
 @inject NavigationManager Nav
-@inject LoginPhanQuyen LoginPhanQuyen
 
-<script src="js/Login.js"></script>
 <link href="css/Login.css" rel="stylesheet" />
 
 @if (IsLoginFormVisible)
 {
-    <div class="form-container" id="login-form">
-        <div class="user-icon"><i class="fas fa-user"></i></div>
+    <!-- FORM LOGIN -->
+    <div class="form-container">
         <h2>Login</h2>
-        <EditForm Model="Input" OnValidSubmit="OnLogin" FormName="login">
+
+        @if (!string.IsNullOrEmpty(LoginMessage))
+        {
+            <div class="alert @(IsLoginSuccess ? "alert-success" : "alert-danger")">
+                @LoginMessage
+            </div>
+        }
+
+        <EditForm Model="@Input" OnValidSubmit="OnLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
             <div class="form-group">
-                <i class="fas fa-envelope"></i>
-                <InputText type="Username" class="form-control" placeholder="Username" required @bind-Value="Input.UserName" />
+                <InputText class="form-control" placeholder="Username" @bind-Value="Input.UserName" />
+                <ValidationMessage For="@(() => Input.UserName)" />
             </div>
             <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <InputText type="password" class="form-control" placeholder="Password" required @bind-Value="Input.Password" />
+                <InputText type="password" class="form-control" placeholder="Password" @bind-Value="Input.Password" />
+                <ValidationMessage For="@(() => Input.Password)" />
             </div>
-            <div class="options">
-                <label><InputCheckbox @bind-Value="Input.Rememberme"/> Remember me</label>
-                <a href="#">Forgot Password?</a>
-            </div>
-            <button type="submit" class="btn-primary">LOGIN</button>
+
+            <button type="submit" class="btn-primary" disabled="@IsLoading">
+                @(IsLoading ? "LOGGING IN..." : "LOGIN")
+            </button>
         </EditForm>
 
-        <div class="social-login">
-            <button class="social-btn google-btn"><i class="fab fa-google"></i> Login with Google</button>
-            <button class="social-btn facebook-btn"><i class="fab fa-facebook-f"></i> Login with Facebook</button>
-        </div>
-
         <div class="toggle-link">
-            Don't have an account? <a @onclick="ShowSignup">Sign Up</a>
+            Don't have an account? <a @onclick="ShowSignup" style="cursor: pointer;">Sign Up</a>
         </div>
     </div>
 }
 else
 {
-    <div class="form-container" id="signup-form">
-        <div class="user-icon"><i class="fas fa-user-plus"></i></div>
+    <!-- FORM SIGNUP -->
+    <div class="form-container">
         <h2>Sign Up</h2>
-        <EditForm Model="Input" OnValidSubmit="OnSignup" FormName="register">
+
+        @if (!string.IsNullOrEmpty(RegisterMessage))
+        {
+            <div class="alert @(IsRegisterSuccess ? "alert-success" : "alert-danger")">
+                @RegisterMessage
+            </div>
+        }
+
+        <EditForm Model="@Input" OnValidSubmit="OnSignup">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
             <div class="form-group">
-                <i class="fas fa-user"></i>
-                <InputText class="form-control" placeholder="Full Name" required @bind-Value="Input.Ten" />
+                <InputText class="form-control" placeholder="Full Name" @bind-Value="Input.Ten" />
+                <ValidationMessage For="@(() => Input.Ten)" />
             </div>
             <div class="form-group">
-                <i class="fas fa-envelope"></i>
-                <InputText type="Username" class="form-control" placeholder="Username" required @bind-Value="Input.UserName" />
+                <InputText class="form-control" placeholder="Username" @bind-Value="Input.UserName" />
+                <ValidationMessage For="@(() => Input.UserName)" />
             </div>
             <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <InputText type="password" class="form-control" placeholder="Password" required @bind-Value="Input.Password" />
+                <InputText type="password" class="form-control" placeholder="Password" @bind-Value="Input.Password" />
+                <ValidationMessage For="@(() => Input.Password)" />
             </div>
             <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <InputText type="password" class="form-control" placeholder="Confirm Password" required @bind-Value="Input.RePassword" />
+                <InputText type="password" class="form-control" placeholder="Confirm Password" @bind-Value="Input.RePassword" />
+                <ValidationMessage For="@(() => Input.RePassword)" />
             </div>
-            <button type="submit" class="btn-primary">SIGN UP</button>
+
+            <button type="submit" class="btn-primary" disabled="@IsLoading">
+                @(IsLoading ? "SIGNING UP..." : "SIGN UP")
+            </button>
         </EditForm>
 
         <div class="toggle-link">
-            Already have an account? <a @onclick="ShowLogin">Login</a>
+            Already have an account? <a @onclick="ShowLogin" style="cursor: pointer;">Login</a>
         </div>
     </div>
 }
 
 @code {
     private bool IsLoginFormVisible = true;
+    private bool IsLoading = false;
+    private string LoginMessage = "";
+    private string RegisterMessage = "";
+    private bool IsLoginSuccess = false;
+    private bool IsRegisterSuccess = false;
 
-    private void ShowSignup() => IsLoginFormVisible = false;
-    private void ShowLogin() => IsLoginFormVisible = true;
     private LoginRegist Input = new();
+
+    // Bộ nhớ giả lập database
+    private static Dictionary<string, (string Ten, string Password)> Users = new();
+
+    private void ShowSignup()
+    {
+        IsLoginFormVisible = false;
+        ClearMessages();
+        Input = new LoginRegist();
+    }
+
+    private void ShowLogin()
+    {
+        IsLoginFormVisible = true;
+        ClearMessages();
+        Input = new LoginRegist();
+    }
+
+    private void ClearMessages()
+    {
+        LoginMessage = "";
+        RegisterMessage = "";
+        IsLoginSuccess = false;
+        IsRegisterSuccess = false;
+    }
+
     private async Task OnLogin()
     {
-        var check = await LoginPhanQuyen.PhanQuyen(Input.UserName , Input.Password);
-        if (check)
+        IsLoading = true;
+        ClearMessages();
+
+        try
         {
-            Nav.NavigateTo("/");
+            if (Users.TryGetValue(Input.UserName, out var user) && user.Password == Input.Password)
+            {
+                LoginMessage = "Đăng nhập thành công!";
+                IsLoginSuccess = true;
+
+                await Task.Delay(1000);
+                Nav.NavigateTo("/");
+            }
+            else
+            {
+                LoginMessage = "Sai tên đăng nhập hoặc mật khẩu!";
+                IsLoginSuccess = false;
+            }
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
-    private void OnSignup()
+    private async Task OnSignup()
     {
-        // Xử lý đăng ký tại đây
+        IsLoading = true;
+        ClearMessages();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Input.Ten) ||
+                string.IsNullOrWhiteSpace(Input.UserName) ||
+                string.IsNullOrWhiteSpace(Input.Password))
+            {
+                RegisterMessage = "Vui lòng nhập đầy đủ thông tin!";
+                IsRegisterSuccess = false;
+                return;
+            }
+
+            if (Input.Password.Length < 6)
+            {
+                RegisterMessage = "Mật khẩu phải có ít nhất 6 ký tự!";
+                IsRegisterSuccess = false;
+                return;
+            }
+
+            if (Input.Password != Input.RePassword)
+            {
+                RegisterMessage = "Mật khẩu xác nhận không khớp!";
+                IsRegisterSuccess = false;
+                return;
+            }
+
+            if (Users.ContainsKey(Input.UserName))
+            {
+                RegisterMessage = "Tên đăng nhập đã tồn tại!";
+                IsRegisterSuccess = false;
+                return;
+            }
+
+            Users[Input.UserName] = (Input.Ten, Input.Password);
+            RegisterMessage = "Đăng ký thành công! Vui lòng đăng nhập.";
+            IsRegisterSuccess = true;
+
+            await Task.Delay(1500);
+            ShowLogin();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // Model
+    public class LoginRegist
+    {
+        public string Ten { get; set; } = "";
+        public string UserName { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string? RePassword { get; set; }
+        public bool Rememberme { get; set; } = false;
     }
 }

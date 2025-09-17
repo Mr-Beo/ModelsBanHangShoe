@@ -1,67 +1,400 @@
-﻿@using BlazorKhachHang.Components.Pages.TaiKhoan
+﻿@page "/donhang"
+@using System.Globalization
 
-@* Component: DonMuaTab.razor *@
+<style>
 
-<div class="bg-white rounded shadow-sm p-4 mb-4">
-    <h5 class="mb-3">Lịch sử đơn hàng</h5>
-    <div class="d-flex justify-content-between position-relative flex-wrap">
-        <div class="step complete">
-            <div class="step-icon"><i class="bi bi-file-earmark-text"></i></div>
-            <div class="step-text">Chờ xác nhận</div>
-            <small>21-12-2023 14:41:42</small>
-        </div>
-        <div class="step complete">
-            <div class="step-icon"><i class="bi bi-truck"></i></div>
-            <div class="step-text">Chờ giao hàng</div>
-            <small>21-12-2023 14:42:23</small>
-        </div>
-        <div class="step complete">
-            <div class="step-icon"><i class="bi bi-box-seam"></i></div>
-            <div class="step-text">Đang vận chuyển</div>
-            <small>21-12-2023 14:42:37</small>
-        </div>
-        <div class="step complete">
-            <div class="step-icon"><i class="bi bi-truck-front"></i></div>
-            <div class="step-text">Đã giao hàng</div>
-            <small>21-12-2023 14:42:42</small>
-        </div>
-        <div class="step complete">
-            <div class="step-icon"><i class="bi bi-check2-circle"></i></div>
-            <div class="step-text">Hoàn thành</div>
-            <small>21-12-2023 14:42:51</small>
-        </div>
+    .orders-wrapper {
+        max-width: 900px;
+        margin: auto;
+        padding: 1rem;
+    }
+
+    .order-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.08);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .order-header, .order-footer {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-footer {
+        border-top: 1px solid #eee;
+        border-bottom: none;
+    }
+
+    .order-body {
+        padding: 1rem;
+    }
+
+    .product-line {
+        display: flex;
+        align-items: center;
+        margin-bottom: .75rem;
+    }
+
+        .product-line img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin-right: .75rem;
+            object-fit: cover;
+        }
+
+    .order-details {
+        background: #f8f9fa;
+        padding: 1rem;
+    }
+
+    .status-pill {
+        padding: .4rem 1rem;
+        border-radius: 20px;
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+        .status-pill.pending {
+            background: #ffeaa7;
+        }
+
+        .status-pill.waiting {
+            background: #a29bfe;
+            color: #fff;
+        }
+
+        .status-pill.shipping {
+            background: #74b9ff;
+            color: #fff;
+        }
+
+        .status-pill.delivered {
+            background: #55efc4;
+        }
+
+        .status-pill.done {
+            background: #00b894;
+            color: #fff;
+        }
+
+        .status-pill.cancelled {
+            background: #d63031;
+            color: #fff;
+        }
+
+    .filter-tabs {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+        .filter-tabs .tab {
+            border: none;
+            padding: .5rem 1rem;
+            border-radius: 20px;
+            background: #f1f2f6;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+            .filter-tabs .tab.active {
+                background: #0984e3;
+                color: #fff;
+            }
+
+    .empty-box {
+        padding: 2rem;
+    }
+
+    /* --- Timeline --- */
+    .order-timeline {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem;
+        position: relative;
+    }
+
+        .order-timeline::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 3px;
+            background: #dfe6e9;
+            z-index: 1;
+        }
+
+    .step {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+
+        .step .circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #dfe6e9;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #636e72;
+            font-size: 16px;
+        }
+
+        .step.complete .circle {
+            background: #00b894;
+            color: #fff;
+        }
+
+        .step .label {
+            margin-top: .5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2d3436;
+        }
+</style>
+
+<div class="orders-wrapper">
+    <!-- Tabs lọc trạng thái -->
+    <div class="filter-tabs">
+        @foreach (var status in Enum.GetValues<TrangThaiDonHang>())
+        {
+            <button class="tab @(CurrentFilter == status ? "active" : "")"
+                    @onclick="() => FilterOrders(status)">
+                @GetStatusText(status)
+            </button>
+        }
     </div>
+
+    <!-- Danh sách đơn hàng -->
+    @if (DonHangList.Any())
+    {
+        @foreach (var order in DonHangList)
+        {
+            <div class="order-card">
+                <!-- Header -->
+                <div class="order-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">Đơn hàng: #@order.MaDonHang</h6>
+                        <small class="text-muted">@order.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
+                    </div>
+                    <span class="status-pill @GetStatusClass(order.TrangThai)">
+                        @GetStatusText(order.TrangThai)
+                    </span>
+                </div>
+
+                <!-- Timeline -->
+                <div class="order-timeline">
+                    @foreach (var step in TimelineSteps)
+                    {
+                        var index = TimelineSteps.IndexOf(step);
+                        var completed = index <= (int)order.TrangThai;
+                        <div class="step @(completed ? "complete" : "")">
+                            <div class="circle"><i class="@step.Icon"></i></div>
+                            <div class="label">@step.Label</div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Body -->
+                <div class="order-body">
+                    @foreach (var sp in order.ChiTietDonHang)
+                    {
+                        <div class="product-line">
+                            <img src="@sp.SanPham.HinhAnh" alt="@sp.SanPham.TenSanPham" />
+                            <div class="flex-fill">
+                                <div class="fw-bold">@sp.SanPham.TenSanPham</div>
+                                <small class="text-muted">@sp.PhanLoai</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-danger">@sp.GiaBan.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) ₫</div>
+                                <small>x@sp.SoLuong</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Footer -->
+                <div class="order-footer d-flex justify-content-between align-items-center">
+                    <div class="fw-bold">
+                        Tổng:
+                        <span class="text-danger">@order.TongTien.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) ₫</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary"
+                            @onclick="() => ToggleOrderDetails(order.Id)">
+                        @(ShowDetails.ContainsKey(order.Id) && ShowDetails[order.Id] ? "Ẩn chi tiết" : "Chi tiết")
+                    </button>
+                </div>
+
+                <!-- Chi tiết -->
+                @if (ShowDetails.ContainsKey(order.Id) && ShowDetails[order.Id])
+                {
+                    <div class="order-details">
+                        <p><i class="bi bi-geo-alt"></i> @order.DiaChiGiaoHang</p>
+                        <p><i class="bi bi-telephone"></i> @order.SoDienThoai</p>
+                        <p><i class="bi bi-credit-card"></i> @order.PhuongThucThanhToan</p>
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-box text-center">
+            <i class="bi bi-bag-x fs-1 text-muted"></i>
+            <p class="mt-2">Chưa có đơn hàng nào</p>
+        </div>
+    }
 </div>
 
-<div class="bg-white rounded shadow-sm p-4">
-    <button class="btn btn-outline-warning btn-sm mb-3">CHI TIẾT</button>
+@code {
+    private List<DonHang> DonHangList = new();
+    private Dictionary<int, bool> ShowDetails = new();
+    private TrangThaiDonHang? CurrentFilter;
 
-    <h6 class="fw-bold">ĐỊA CHỈ NHẬN HÀNG</h6>
-    <p class="mb-1">Địa chỉ 12</p>
-    <p class="mb-1">0473029182</p>
-    <p>aaaaa, Xã Mường Giàng, Huyện Quỳnh Nhai, Sơn La</p>
+    protected override void OnInitialized()
+    {
+        DonHangList = GenerateSampleOrders();
+    }
 
-    <div class="order-card row">
-        <div class="col-md-2">
-            <img src="https://down-vn.img.susercontent.com/file/sg-11134201-7qvdm-lnwt59z4edkl8a" alt="Giày">
-        </div>
-        <div class="col-md-10">
-            <p class="mb-1 fw-semibold">Balen Grey 2023 Bạc Đế nhựa "Xanh dương"</p>
-            <p class="text-muted mb-1">Phân loại hàng: Giày lười - 42</p>
-            <p class="text-danger mb-1 fw-semibold">104,500 ₫</p>
-            <p>Số lượng: x1</p>
-        </div>
-    </div>
+    private void ToggleOrderDetails(int id)
+    {
+        ShowDetails[id] = !ShowDetails.ContainsKey(id) || !ShowDetails[id];
+    }
 
-    <hr>
+    private void FilterOrders(TrangThaiDonHang status)
+    {
+        CurrentFilter = status;
+        DonHangList = GenerateSampleOrders().Where(x => x.TrangThai == status).ToList();
+    }
 
-    <div class="d-flex justify-content-end">
-        <div>
-            <p class="mb-1">Tổng tiền hàng: <span class="float-end">104,500 ₫</span></p>
-            <p class="mb-1">Phí vận chuyển: <span class="float-end">34,000 ₫</span></p>
-            <p class="mb-1">Giảm giá: <span class="float-end">0 ₫</span></p>
-            <h5 class="text-danger mt-3">Thành tiền: 138,500 ₫</h5>
-        </div>
-    </div>
-</div>
+    private string GetStatusClass(TrangThaiDonHang st) => st switch
+    {
+        TrangThaiDonHang.ChoXacNhan => "pending",
+        TrangThaiDonHang.ChoGiaoHang => "waiting",
+        TrangThaiDonHang.DangGiao => "shipping",
+        TrangThaiDonHang.DaGiao => "delivered",
+        TrangThaiDonHang.HoanThanh => "done",
+        TrangThaiDonHang.DaHuy => "cancelled",
+        _ => ""
+    };
 
+    private string GetStatusText(TrangThaiDonHang st) => st switch
+    {
+        TrangThaiDonHang.ChoXacNhan => "Chờ xác nhận",
+        TrangThaiDonHang.ChoGiaoHang => "Chờ giao",
+        TrangThaiDonHang.DangGiao => "Đang giao",
+        TrangThaiDonHang.DaGiao => "Đã giao",
+        TrangThaiDonHang.HoanThanh => "Hoàn thành",
+        TrangThaiDonHang.DaHuy => "Đã hủy",
+        _ => ""
+    };
+
+    // Steps của timeline
+    private List<TimelineStep> TimelineSteps = new()
+    {
+        new TimelineStep("bi bi-file-earmark-text", "Chờ xác nhận"),
+        new TimelineStep("bi bi-truck", "Chờ giao hàng"),
+        new TimelineStep("bi bi-box-seam", "Đang vận chuyển"),
+        new TimelineStep("bi bi-truck-front", "Đã giao hàng"),
+        new TimelineStep("bi bi-check2-circle", "Hoàn thành"),
+    };
+
+    // ====== Dữ liệu mẫu ======
+    private List<DonHang> GenerateSampleOrders()
+    {
+        return new List<DonHang>
+        {
+            new DonHang
+            {
+                Id = 1,
+                MaDonHang = "DH001",
+                NgayTao = DateTime.Now.AddDays(-1),
+                TrangThai = TrangThaiDonHang.ChoGiaoHang,
+                DiaChiGiaoHang = "123 Trần Hưng Đạo, Hà Nội",
+                SoDienThoai = "0123456789",
+                PhuongThucThanhToan = "Thanh toán khi nhận hàng",
+                TongTien = 150000,
+                ChiTietDonHang = new List<ChiTietDonHang>
+                {
+                    new ChiTietDonHang
+                    {
+                        SanPham = new SanPham { TenSanPham = "Giày Sneaker", HinhAnh="https://via.placeholder.com/80" },
+                        PhanLoai = "Màu trắng - Size 42",
+                        GiaBan = 150000,
+                        SoLuong = 1
+                    }
+                }
+            },
+            new DonHang
+            {
+                Id = 2,
+                MaDonHang = "DH002",
+                NgayTao = DateTime.Now.AddDays(-3),
+                TrangThai = TrangThaiDonHang.HoanThanh,
+                DiaChiGiaoHang = "456 Lê Lợi, HCM",
+                SoDienThoai = "0987654321",
+                PhuongThucThanhToan = "Chuyển khoản",
+                TongTien = 250000,
+                ChiTietDonHang = new List<ChiTietDonHang>
+                {
+                    new ChiTietDonHang
+                    {
+                        SanPham = new SanPham { TenSanPham = "Giày nike", HinhAnh="https://via.placeholder.com/80" },
+                        PhanLoai = "Màu đen - Size L",
+                        GiaBan = 125000,
+                        SoLuong = 2
+                    }
+                }
+            }
+        };
+    }
+
+    // ====== Models ======
+    public class DonHang
+    {
+        public int Id { get; set; }
+        public string MaDonHang { get; set; } = "";
+        public DateTime NgayTao { get; set; }
+        public TrangThaiDonHang TrangThai { get; set; }
+        public string DiaChiGiaoHang { get; set; } = "";
+        public string SoDienThoai { get; set; } = "";
+        public string PhuongThucThanhToan { get; set; } = "";
+        public decimal TongTien { get; set; }
+        public List<ChiTietDonHang> ChiTietDonHang { get; set; } = new();
+    }
+
+    public class ChiTietDonHang
+    {
+        public SanPham SanPham { get; set; } = new();
+        public string PhanLoai { get; set; } = "";
+        public decimal GiaBan { get; set; }
+        public int SoLuong { get; set; }
+    }
+
+    public class SanPham
+    {
+        public string TenSanPham { get; set; } = "";
+        public string HinhAnh { get; set; } = "";
+    }
+
+    public enum TrangThaiDonHang
+    {
+        ChoXacNhan,
+        ChoGiaoHang,
+        DangGiao,
+        DaGiao,
+        HoanThanh,
+        DaHuy
+    }
+
+    public record TimelineStep(string Icon, string Label);
+}
