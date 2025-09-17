@@ -5,11 +5,14 @@ using BlazorKhachHang.Components;
 using BlazorKhachHang.Service.IService;
 using BlazorKhachHang.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Policy;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddBlazorBootstrap();
+
+
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -47,6 +50,18 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 string url = "https://localhost:7246/";
+
+// Đăng ký GioHangService
+builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<GioHangService>();
+builder.Services.AddHttpClient<IGioHangService, GioHangService>(client =>
+{
+    client.BaseAddress = new Uri(url);
+});
+
+
+
 builder.Services.AddScoped(sp => new HttpClient
 {
     BaseAddress = new Uri(url)

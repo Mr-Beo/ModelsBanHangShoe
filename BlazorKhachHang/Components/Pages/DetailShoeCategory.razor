@@ -1,0 +1,183 @@
+﻿@page "/detailShoeCategory/{giayId:guid}"
+@rendermode InteractiveServer
+@using Data.Models
+@using BlazorKhachHang.Service.IService
+@using API.Models.DTO
+@inject IGiayService giayService
+@inject IGioHangService gioHangService
+@inject NavigationManager manager
+@inject IJSRuntime JS
+
+<div class="detail-page">
+    @if (giay == null)
+    {
+        <p>Đang tải thông tin sản phẩm...</p>
+    }
+    else
+    {
+        <!-- Top section -->
+        <div class="detail-container">
+            <!-- Left images -->
+            <div class="image-gallery">
+                <div class="grid-thumbnails">
+                    @foreach (var ct in giay.ChiTietGiays.DistinctBy(x => x.TenMau))
+                    {
+                        <img src="@("/" + ct.AnhGiay)" alt="@ct.TenMau"
+                             class="thumb @(ct.TenMau == selectedColor ? "active" : "")"
+                             @onclick="() => ChangeColor(ct)" />
+                    }
+                </div>
+            </div>
+
+            <!-- Right info -->
+            <div class="info-box">
+                <h2 class="title">@giay.TenGiay</h2>
+
+                <div class="rating">
+                    ⭐⭐⭐⭐⭐ <span>(12345 reviews)</span>
+                </div>
+
+                <div class="price-box">
+                    <span class="price">@firstChiTiet?.Gia.ToString("N0") đ</span>
+                    <span class="discount">-15%</span>
+                </div>
+
+                <div class="options">
+                    <div>
+                        <label>Màu sắc:</label>
+                        <select @bind="selectedColor" @onchange="OnColorChanged">
+                            @foreach (var color in giay.ChiTietGiays.Select(c => c.TenMau).Distinct())
+                            {
+                                <option value="@color">@color</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Size:</label>
+                        <select @bind="selectedSize">
+                            @foreach (var size in giay.ChiTietGiays
+                           .Where(c => c.TenMau == selectedColor)
+                           .Select(c => c.size).Distinct())
+                            {
+                                <option value="@size">@size</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Số lượng:</label>
+                        <input type="number" min="1" @bind="quantity" />
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-add" @onclick="AddToCartAsync">ADD TO SHOP</button>
+                    <button class="btn-buy">BUY IT NOW</button>
+                </div>
+
+                <div class="delivery">
+                    <p>🚚 Est. delivery in 5-7 days</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail section -->
+        <div class="extra-info">
+            <h3>Detail</h3>
+            <ul>
+                <li>High quality form</li>
+                <li>Material: EVA, Rubber</li>
+                <li>Made in Vietnam</li>
+            </ul>
+
+            <h3>Description</h3>
+            <p>@giay.ChiTietGiays</p>
+        </div>
+
+        <!-- Ratings section -->
+        <div class="review-section">
+            <h3>Product ratings</h3>
+            <div class="rating-score">
+                ⭐ 4.8 out of 5 (1200 reviews)
+            </div>
+
+            <div class="review-list">
+                <div class="review-item">
+                    <img src="/images/user1.png" class="avatar" />
+                    <div>
+                        <p><b>Nguyễn Văn A</b> ⭐⭐⭐⭐⭐</p>
+                        <p>Giày đẹp, mang rất thoải mái!</p>
+                        <img src="/images/review1.jpg" class="review-img" />
+                    </div>
+                </div>
+                <div class="review-item">
+                    <img src="/images/user2.png" class="avatar" />
+                    <div>
+                        <p><b>Trần Thị B</b> ⭐⭐⭐⭐</p>
+                        <p>Chất liệu ổn, giao hàng nhanh.</p>
+                        <img src="/images/review2.jpg" class="review-img" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid giayId { get; set; }
+
+    private GiayDTO? giay;
+    private GiayChiTietDTO? firstChiTiet;
+    private string selectedColor = "";
+    private int selectedSize = 1;
+    private int quantity = 1;
+
+    private Guid khachHangId = new("31842850-7A2D-4F94-973F-F936DCAE5A12");
+
+    protected override async Task OnInitializedAsync()
+    {
+        giay = await giayService.GetByIdAsync(giayId);
+        if (giay?.ChiTietGiays != null && giay.ChiTietGiays.Any())
+        {
+            firstChiTiet = giay.ChiTietGiays.First();
+            selectedColor = firstChiTiet?.TenMau ?? "";
+            selectedSize = firstChiTiet?.size ?? 1;
+        }
+    }
+
+    private void ChangeColor(GiayChiTietDTO ct)
+    {
+        selectedColor = ct.TenMau;
+        firstChiTiet = ct;
+    }
+
+    private void OnColorChanged(ChangeEventArgs e)
+    {
+        selectedColor = e.Value?.ToString() ?? "";
+        firstChiTiet = giay?.ChiTietGiays.FirstOrDefault(c => c.TenMau == selectedColor);
+    }
+
+    private async Task AddToCartAsync()
+    {
+        var chiTiet = giay?.ChiTietGiays
+            .FirstOrDefault(c => c.TenMau == selectedColor && c.size == selectedSize);
+
+        if (chiTiet == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Vui lòng chọn màu và size hợp lệ!");
+            return;
+        }
+
+        try
+        {
+            await gioHangService.AddToCartAsync(khachHangId, giay.GiayId, chiTiet.GiayChiTietId, quantity);
+            await JS.InvokeVoidAsync("alert", "✅ Đã thêm sản phẩm vào giỏ hàng!");
+        }
+        catch
+        {
+            await JS.InvokeVoidAsync("alert", "❌ Lỗi khi thêm sản phẩm vào giỏ hàng!");
+        }
+    }
+}

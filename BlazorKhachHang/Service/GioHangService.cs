@@ -1,5 +1,6 @@
 ﻿using API.Models.DTO;
 using BlazorKhachHang.Service.IService;
+using System.Net.Http;
 using System.Net.Http.Json;
 
 namespace BlazorKhachHang.Service
@@ -12,7 +13,19 @@ namespace BlazorKhachHang.Service
         {
             _http = http;
         }
+        public async Task AddToCartAsync(Guid khachHangId, Guid giayId, Guid chiTietGiayId, int soLuong)
+        {
+            var data = new
+            {
+                KhachHangId = khachHangId,
+                GiayId = giayId,
+                ChiTietGiayId = chiTietGiayId,
+                SoLuong = soLuong
+            };
 
+            var response = await _http.PostAsJsonAsync("api/cart/add", data);
+            response.EnsureSuccessStatusCode();
+        }
         public async Task<GioHangDTO> LayTheoTaiKhoanAsync(Guid taiKhoanId)
             => await _http.GetFromJsonAsync<GioHangDTO>($"/api/giohang/tai-khoan/{taiKhoanId}");
 

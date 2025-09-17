@@ -5,6 +5,7 @@
 @using API.Models.DTO
 @inject IGiayService service
 @inject IGiayYeuThichService giayYeuThichService
+@inject IGioHangService gioHangService
 @inject NavigationManager manager
 @inject IJSRuntime JS
 
@@ -16,8 +17,7 @@
 
 <main class="container">
     <aside class="filter">
-		<strong>Thương Hiệu</strong><br />
-
+        <strong>Thương Hiệu</strong><br />
         @foreach (var brand in brandList)
         {
             <label>
@@ -40,11 +40,9 @@
                            checked="@selectedPriceLabels.Contains(range.Label)" />
                     @range.Label
                 </label>
-
                 <br />
             }
         </div>
-
 
         <div class="filter-group">
             <strong>Màu Sắc</strong>
@@ -58,7 +56,6 @@
                 }
             </div>
         </div>
-
     </aside>
 
     <section class="product-section">
@@ -79,28 +76,30 @@
                 {
                     var firstChiTiet = giay.ChiTietGiays.FirstOrDefault();
                     var groupByColor = giay.ChiTietGiays
-                        .Where(c => !string.IsNullOrWhiteSpace(c.TenMau))
-                        .GroupBy(c => c.TenMau!)
-                        .ToList();
+                    .Where(c => !string.IsNullOrWhiteSpace(c.TenMau))
+                    .GroupBy(c => c.TenMau!)
+                    .ToList();
 
                     if (firstChiTiet != null)
                     {
                         <div class="product-card" style="cursor: pointer;" @onclick="@(() => NavigateToDetail(giay.GiayId))">
                             <div class="product-img-container">
-                                <img src="@($"https://localhost:7246/{(string.IsNullOrEmpty(firstChiTiet.AnhGiay) ? "images/no-image.png" : firstChiTiet.AnhGiay.TrimStart('/'))}")"
+                                <img src="@(string.IsNullOrEmpty(firstChiTiet.AnhGiay)
+                                            ? "/images/no-image.png"
+                                            : firstChiTiet.AnhGiay.StartsWith("/")
+                                                ? firstChiTiet.AnhGiay
+                                                : "/" + firstChiTiet.AnhGiay)"
                                      alt="Product Image"
                                      onerror="this.onerror=null;this.src='/images/no-image.png';" />
 
                                 <div class="discount-badge">-10%</div>
+
                                 <div class="favorite-btn"
                                      @onclick:stopPropagation="true"
                                      @onclick="@(async () => await ToggleFavorite(giay.GiayId))">
                                     <i class="fa-heart @(IsFavorite(giay.GiayId) ? "fas" : "far")"
                                        id="heart-@giay.GiayId"></i>
                                 </div>
-
-
-
                             </div>
 
                             <div class="product-info">
@@ -110,11 +109,15 @@
                                     <span class="count">(17523)</span>
                                 </p>
 
-                                <div class="bottom-info">
+                                <div class="bottom-info d-flex justify-content-between align-items-center">
                                     <span class="price">
                                         $<span class="main">@firstChiTiet.Gia.ToString("N0")</span><sup>đ</sup>
                                     </span>
                                     <span class="sold">@giay.TenTheLoaiGiay</span>
+                                    <button class="btn btn-sm btn-primary ms-2"
+                                            @onclick="async () => await AddToCart(giay.GiayId, firstChiTiet.GiayChiTietId)">
+                                        Thêm vào giỏ
+                                    </button>
                                 </div>
 
                                 <div class="color-size-list mt-2">
@@ -151,14 +154,12 @@
     private List<GiayDTO> giayList = new();
     private List<GiayDTO> allGiayList = new();
     private List<GiayYeuThichDTO> danhSachYeuThich = new();
-    private Guid khachHangId = new("31842850-7A2D-4F94-973F-F936DCAE5A12"); // Đang fix tạm Id Khách hàng có sẵn trong db, vì chưa làm đăng nhập cho khách hàng 
-
-
+    private Guid khachHangId = new("31842850-7A2D-4F94-973F-F936DCAE5A12");
 
     private HashSet<string> selectedBrands = new();
     private Dictionary<string, bool> IsBrandSelected = new();
-    private HashSet<string> favoriteIds = new();
     private List<string> brandList = new() { "Nike", "Adidas", "Puma", "Skechers", "Vans" };
+    private HashSet<string> favoriteIds = new();
 
     private List<(string Label, decimal? Min, decimal? Max)> priceRanges = new()
     {
@@ -176,7 +177,6 @@
 
     private string _searchKeyword = "";
     private string searchKeyword
-    //ahihi
     {
         get => _searchKeyword;
         set
@@ -189,7 +189,6 @@
     protected override async Task OnInitializedAsync()
     {
         allGiayList = await service.GetAllAsync();
-
         danhSachYeuThich = (await giayYeuThichService.GetAllByKhachHangAsync(khachHangId)).ToList();
 
         foreach (var brand in brandList)
@@ -200,12 +199,10 @@
         FilterGiayList();
     }
 
-
     private void FilterGiayList()
     {
         IEnumerable<GiayDTO> query = allGiayList;
 
-        // 🔍 Lọc theo từ khóa tên giày
         if (!string.IsNullOrWhiteSpace(searchKeyword))
         {
             query = query.Where(g =>
@@ -213,7 +210,6 @@
                 g.TenGiay.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase));
         }
 
-        // 🏷 Lọc theo thương hiệu
         selectedBrands = IsBrandSelected
             .Where(x => x.Value)
             .Select(x => x.Key)
@@ -226,7 +222,6 @@
                 selectedBrands.Contains(g.TenThuongHieu));
         }
 
-        // 💰 Lọc theo khoảng giá
         if (selectedPriceLabels.Any())
         {
             query = query.Where(g =>
@@ -238,6 +233,7 @@
                     (!range.Max.HasValue || firstPrice <= range.Max.Value));
             });
         }
+
         if (selectedColors.Any())
         {
             query = query.Where(g =>
@@ -246,11 +242,9 @@
             );
         }
 
-
         giayList = query
-      .OrderByDescending(g => IsFavorite(g.GiayId)) 
-      .ToList();
-
+            .OrderByDescending(g => IsFavorite(g.GiayId))
+            .ToList();
     }
 
     private void OnBrandChanged(string brand, bool isChecked)
@@ -268,6 +262,7 @@
 
         FilterGiayList();
     }
+
     private void OnColorFilterChanged(string color)
     {
         if (selectedColors.Contains(color))
@@ -278,44 +273,25 @@
         FilterGiayList();
     }
 
-
     private async Task ToggleFavorite(Guid giayId)
     {
         try
         {
             await giayYeuThichService.ToggleFavoriteAsync(giayId, khachHangId);
-
             danhSachYeuThich = (await giayYeuThichService.GetAllByKhachHangAsync(khachHangId)).ToList();
             FilterGiayList();
-
             await JS.InvokeVoidAsync("alert", "Cập nhật yêu thích thành công!");
-            StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("⚠️ Lỗi ToggleFavorite:");
-            Console.WriteLine("Message: " + ex.Message);
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine("Inner: " + ex.InnerException.Message);
-            }
-
+            Console.WriteLine(ex.Message);
             await JS.InvokeVoidAsync("alert", "❌ Lỗi khi yêu thích sản phẩm! Vui lòng thử lại.");
         }
     }
 
+    private bool IsFavorite(Guid giayId) => danhSachYeuThich.Any(f => f.GiayId == giayId);
 
-    private bool IsFavorite(Guid giayId)
-    {
-        return danhSachYeuThich.Any(f => f.GiayId == giayId);
-    }
-
-
-
-    private void NavigateToDetail(Guid giayId)
-    {
-        manager.NavigateTo($"/detailShoeCategory/{giayId}");
-    }
+    private void NavigateToDetail(Guid giayId) => manager.NavigateTo($"/detailShoeCategory/{giayId}");
 
     private string ConvertTenMauToColor(string tenMau)
     {
@@ -330,5 +306,18 @@
             _ => "grey"
         };
     }
-}
 
+    private async Task AddToCart(Guid giayId, Guid chiTietGiayId)
+    {
+        try
+        {
+            await gioHangService.AddToCartAsync(khachHangId, giayId, chiTietGiayId, 1);
+            await JS.InvokeVoidAsync("alert", "✅ Đã thêm sản phẩm vào giỏ hàng!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi AddToCart: " + ex.Message);
+            await JS.InvokeVoidAsync("alert", "❌ Lỗi khi thêm sản phẩm vào giỏ hàng!");
+        }
+    }
+}
