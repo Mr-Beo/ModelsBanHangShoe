@@ -1,6 +1,7 @@
 ﻿@page "/khachhang"
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
+@inject HttpClient Http
 
 <div class="container py-4">
     <div class="row">
@@ -98,9 +99,9 @@
             <!-- Đổi mật khẩu -->
             @if (activeTab == "doimatkhau")
             {
-               
-                    <DoiMatKhauTab />
-               
+
+                <DoiMatKhauTab />
+
             }
         </div>
     </div>
@@ -173,16 +174,29 @@
 
     private async Task SaveProfile()
     {
-        await JS.InvokeVoidAsync("saveProfileToLocalStorage", new
+        var khachHang = new KhachHangModel
+            {
+                KhachHangId = Guid.Parse("13caa136-0a0e-43f9-8560-8ad6fbfae533"),
+                HoTen = ProfileName,
+                Email = ProfileEmail,
+                SoDienThoai = ProfilePhone,
+                GioiTinh = ProfileGender,
+                NgaySinh = ProfileBirthday
+            };
+
+        var response = await Http.PutAsJsonAsync($"api/KhachHang/{khachHang.KhachHangId}", khachHang);
+
+        if (response.IsSuccessStatusCode)
         {
-            name = ProfileName,
-            email = ProfileEmail,
-            phone = ProfilePhone,
-            gender = ProfileGender,
-            birthday = ProfileBirthday.ToString("yyyy-MM-dd")
-        });
-        await JS.InvokeVoidAsync("alert", "Thông tin đã được lưu tạm thời!");
+            await JS.InvokeVoidAsync("alert", "Thông tin đã được lưu vào Database!");
+        }
+        else
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("alert", $"Lỗi: {msg}");
+        }
     }
+
 
     private async Task SaveAddress()
     {
@@ -219,7 +233,6 @@
         DonMuaHtml = await JS.InvokeAsync<string>("fetchHtmlContent", "donmua.html");
     }
 
-    
 
     public class ProfileData
     {
@@ -229,4 +242,15 @@
         public string gender { get; set; } = string.Empty;
         public string birthday { get; set; } = string.Empty;
     }
+
+    public class KhachHangModel
+    {
+        public Guid KhachHangId { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string SoDienThoai { get; set; } = string.Empty;
+        public string GioiTinh { get; set; } = string.Empty;
+        public DateTime NgaySinh { get; set; }
+    }
+
 }
