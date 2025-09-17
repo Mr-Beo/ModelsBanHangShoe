@@ -13,7 +13,7 @@ namespace Data.Models
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
-            optionsBuilder.UseSqlServer(@"Data Source=LAPTOP-UKQRGABP\SQLEXPRESS;Initial Catalog=DuanNhom11ModelsBanHang;Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True");
+            optionsBuilder.UseSqlServer(@"Data Source=TranAnh;Initial Catalog=DuanNhom11ModelsBanHang;Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True");
 
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -146,12 +146,13 @@ namespace Data.Models
                 .OnDelete(DeleteBehavior.SetNull);
 
             // KhachHang – TaiKhoan
-                 modelBuilder.Entity<KhachHang>()
-                .HasOne(kh => kh.TaiKhoan)
-                .WithOne(tk => tk.KhachHang) // thay vì WithMany()
-                .HasForeignKey<KhachHang>(kh => kh.TaiKhoanId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<KhachHang>()
+            .HasOne(kh => kh.TaiKhoan)
+            .WithOne(tk => tk.KhachHang) // thay vì WithMany()
+.            HasForeignKey<KhachHang>(kh => kh.TaiKhoanId)
+.           OnDelete(DeleteBehavior.Restrict);
         }
+        
 
         // DbSet khai báo bảng
         public DbSet<KhachHang> KhachHangs { get; set; }
